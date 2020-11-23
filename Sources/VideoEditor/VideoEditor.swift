@@ -52,9 +52,8 @@ public final class VideoEditor: VideoEditorProtocol {
                 videoCompositionTrack.scaleTimeRange(newRange, toDuration: time)
                 videoCompositionTrack.preferredTransform = videoTrack.preferredTransform
 
-                if !edit.isMuted {
-                    guard let audioCompositionTrack = composition.addMutableTrack(withMediaType: .audio, preferredTrackID: kCMPersistentTrackID_Invalid),
-                          let audioTrack = originalAsset.tracks(withMediaType: .audio).first else {
+                if let audioTrack = originalAsset.tracks(withMediaType: .audio).first, !edit.isMuted {
+                    guard let audioCompositionTrack = composition.addMutableTrack(withMediaType: .audio, preferredTrackID: kCMPersistentTrackID_Invalid) else {
                         promise(.failure(VideoEditorError.unknown))
                         return
                     }
@@ -81,8 +80,10 @@ public final class VideoEditor: VideoEditorProtocol {
             promise(.success(result))
         }.eraseToAnyPublisher()
     }
+}
 
-    private func makeVideoComposition(
+fileprivate extension VideoEditor {
+    func makeVideoComposition(
         edit: VideoEdit,
         videoCompositionTrack: AVCompositionTrack,
         videoTrack: AVAssetTrack,
@@ -112,7 +113,11 @@ public final class VideoEditor: VideoEditorProtocol {
         return videoComposition
     }
 
-    private func makeLayerInstructionTransform(naturalSize: CGSize, renderSize: CGSize, croppingPreset: CroppingPreset?) -> CGAffineTransform? {
+    func makeLayerInstructionTransform(
+        naturalSize: CGSize,
+        renderSize: CGSize,
+        croppingPreset: CroppingPreset?
+    ) -> CGAffineTransform? {
         guard croppingPreset != nil else {
             return nil
         }
@@ -123,7 +128,10 @@ public final class VideoEditor: VideoEditorProtocol {
         return CGAffineTransform(translationX: widthOffset, y: heightOffset)
     }
 
-    private func makeRenderSize(naturalSize: CGSize, croppingPreset: CroppingPreset?) -> CGSize {
+    func makeRenderSize(
+        naturalSize: CGSize,
+        croppingPreset: CroppingPreset?
+    ) -> CGSize {
         guard let croppingPreset = croppingPreset else {
             return CGSize(width: abs(naturalSize.width), height: abs(naturalSize.height))
         }
